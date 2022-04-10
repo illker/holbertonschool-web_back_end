@@ -1,57 +1,36 @@
 const fs = require('fs');
 
-function noStudents(filepath) {
+module.exports = function countStudents(path) {
   try {
-    const csv = fs.readFileSync(filepath, { encoding: 'utf8' });
-    const Array = csv.split(/\r?\n|\n/);
-    const headers = Array[0].split(',');
+    // read data
+    const data = fs.readFileSync(path, { encoding: 'utf-8' });
+    // split data and taking only list without header
+    const lines = data.split('\n').slice(1, -1);
+    // give the header of data
+    const header = data.split('\n').slice(0, 1)[0].split(',');
+    // find firstname and field index
+    const idxFn = header.findIndex((ele) => ele === 'firstname');
+    const idxFd = header.findIndex((ele) => ele === 'field');
+    // declarate two dictionaries for count each fields and store list of students
+    const fields = {};
+    const students = {};
 
-    const dictOfList = [];
-    const noArray = Array.slice(1);
-    for (let i = 0; i < noArray.length; i += 1) {
-      const data = noArray[i].split(',');
-      if (data.length === headers.length) {
-        const row = {};
-        for (let j = 0; j < headers.length; j += 1) {
-          row[headers[j].trim()] = data[j].trim();
-        }
-        dictOfList.push(row);
-      }
-    }
-
-    let noStudentCS = 0;
-    let noStudentSWE = 0;
-    const studentsCS = [];
-    const studentsSWE = [];
-
-    dictOfList.forEach((element) => {
-      if (element.field === 'CS') {
-        noStudentCS += 1;
-        studentsCS.push(element.firstname);
-      } else if (element.field === 'SWE') {
-        noStudentSWE += 1;
-        studentsSWE.push(element.firstname);
-      }
+    lines.forEach((line) => {
+      const list = line.split(',');
+      if (!fields[list[idxFd]]) fields[list[idxFd]] = 0;
+      fields[list[idxFd]] += 1;
+      if (!students[list[idxFd]]) students[list[idxFd]] = '';
+      students[list[idxFd]] += students[list[idxFd]] ? `, ${list[idxFn]}` : list[idxFn];
     });
 
-    const noStudents = noStudentCS + noStudentSWE;
-
-    console.log(`Number of students: ${noStudents}`);
-    console.log(
-      `Number of students in CS: ${noStudentCS}. List: ${studentsCS
-        .toString()
-        .split(',')
-        .join(', ')}`
-    );
-    console.log(
-      `Number of students in SWE: ${noStudentSWE}. List: ${studentsSWE
-        .toString()
-        .split(',')
-        .join(', ')}`
-    );
-  } catch (err) {
+    console.log(`Number of students: ${lines.length}`);
+    for (const key in fields) {
+      if (Object.hasOwnProperty.call(fields, key)) {
+        const element = fields[key];
+        console.log(`Number of students in ${key}: ${element}. List: ${students[key]}`);
+      }
+    }
+  } catch (error) {
     throw new Error('Cannot load the database');
   }
-}
-
-module.exports = noStudents;
+};
